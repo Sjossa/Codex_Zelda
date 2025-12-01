@@ -1,20 +1,16 @@
-import { Link } from "expo-router";
-import { useState } from "react";
-import { StyleSheet, Text, TextInput, View } from "react-native";
-import Header from '../components/Header/header';
+import { StyleSheet, View } from "react-native";
 
-export default function Index() {
-  const [name, setName] = useState("");
+export default function ABout() {
+  //   const [name, setName] = useState("");
   return (
     <View style={styles.container}>
-      <Header/>
       {/* <Text style={styles.title}>Projet zelda</Text>
       <Link href="/Home">avv</Link> */}
-      <TextInput
+      {/* <TextInput
         style={styles.searchbar}
         onChangeText={(text) => setName(text)}
         value={name}
-      />
+      /> */}
     </View>
   );
 }
@@ -26,12 +22,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  title: {
-    color: "#FFFFFE",
-  },
+
   searchbar: {
     backgroundColor: "#000000",
     color: "#FFFFFE",
-    width: 250
+    width: 250,
   },
 });
