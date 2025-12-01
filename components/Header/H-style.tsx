@@ -9,7 +9,7 @@ export const styles = StyleSheet.create({
   },
 
   title: {
-    color: "#d6d604ff",
+    color: "#acac72ff",
     justifyContent: "center",
     alignItems: "center",
   },
