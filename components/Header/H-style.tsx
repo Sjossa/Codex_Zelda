@@ -2,15 +2,10 @@ import { StyleSheet } from "react-native";
 
 export const styles = StyleSheet.create({
   Header: {
-    backgroundColor: "#acc9b0ff",
+    backgroundColor: "red",
+    position: "fixed",
     flexDirection: "row",
     width: "100%",
-    alignItems: "center",
-  },
-
-  title: {
-    color: "#acac72ff",
-    justifyContent: "center",
     alignItems: "center",
   },
 });

@@ -1,5 +1,6 @@
-import { Href, useRouter } from "expo-router";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import { useRouter } from "expo-router";
+import { Dimensions, Pressable, StyleSheet, Text, View } from "react-native";
 import {
   ClipPath,
   Polygon,
@@ -7,31 +8,56 @@ import {
   Svg,
   Image as SvgImage,
 } from "react-native-svg";
-
 import ScreenBackground from "../components/Background/Background";
+import { RouteType } from "../types/freakyjorys.types";
 
-type AppRoute = Href;
+const { width, height } = Dimensions.get("window");
+
+const scale = width / 390;
+const rs = (size: number) => Math.round(size * scale);
 
 interface Item {
   id: string;
   type: "box" | "text";
-  route?: AppRoute;
-  value?: string;
+  value?: RouteType;
+  image?: string;
 }
 
 export default function Home() {
   const router = useRouter();
 
   const items: Item[] = [
-    { id: "box1", type: "box", route: "/example" },
-    { id: "box2", type: "box", route: "/About" },
-    { id: "box", type: "box", value: "B" },
-    { id: "box3", type: "box", route: "/About" },
+    {
+      id: "box1",
+      type: "box",
+      value: "characters",
+      image: require("../assets/images/zelda.jpg"),
+    },
+    {
+      id: "box2",
+      type: "box",
+      value: "locations",
+      image: require("../assets/images/carte.png"),
+    },
+    {
+      id: "box",
+      type: "box",
+      value: "enemies",
+      image: require("../assets/images/ennemi.png"),
+    },
+    {
+      id: "box3",
+      type: "box",
+      value: "items",
+      image: require("../assets/images/item.png"),
+    },
   ];
 
   return (
     <ScreenBackground>
-      <Pressable style={styles.topArea} onPress={() => router.push("/About")}>
+      <Pressable style={styles.topArea}>
+        <Text style={styles.TextTitre}>Projet zelda</Text>
+
         <Svg width="100%" height="100%" viewBox="0 0 100 100">
           <ClipPath id="clip">
             <Polygon points="30,10 70,10 85,30 70,50 30,50 15,30" />
@@ -42,16 +68,25 @@ export default function Home() {
             x="0"
             y="10"
             width="100"
-            height="60"
+            height="50"
             preserveAspectRatio="xMidYMid slice"
+            clipPath="url(#clip)"
+          />
+          <Rect
+            x="0"
+            y="10"
+            width="100"
+            height="60"
+            fill="black"
+            opacity="0.4"
             clipPath="url(#clip)"
           />
 
           <Polygon
             points="30,10 70,10 85,30 70,50 30,50 15,30"
             fill="none"
-            stroke="red"
             strokeWidth="1"
+            onPress={() => router.push(`/Example?type=characters`)}
           />
         </Svg>
       </Pressable>
@@ -62,19 +97,29 @@ export default function Home() {
             <Pressable
               key={item.id}
               style={styles.itemBox}
-              onPress={() => item.route && router.push(item.route)}
+              onPress={() => router.push(`/Example?type=${item.value}`)}
             >
               <Svg width="100%" height="100%" viewBox="0 0 60 60">
-                <Rect
+                <Rect x="5" y="5" width="50" height="50" strokeWidth="2" />
+
+                <SvgImage
+                  href={item.image}
                   x="5"
                   y="5"
                   width="50"
                   height="50"
-                  stroke="red"
-                  strokeWidth="2"
-                  fill="none"
+                  preserveAspectRatio="xMidYMid slice"
                 />
               </Svg>
+
+              <LinearGradient
+                colors={["transparent", "rgba(0,0,0,0.8)"]}
+                style={styles.overlay}
+              />
+
+              <View style={styles.Overlay}>
+                <Text style={styles.Text}>{item.value}</Text>
+              </View>
             </Pressable>
           ) : (
             <Text key={item.id} style={styles.itemText}>
@@ -90,7 +135,10 @@ export default function Home() {
 const styles = StyleSheet.create({
   topArea: {
     width: "100%",
-    height: 260,
+    height: width * 0.9,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: -50 * scale,
   },
 
   itemsContainer: {
@@ -98,19 +146,71 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "center",
-    gap: 20,
+    gap: 20 * scale,
   },
 
   itemBox: {
-    width: "40%",
     aspectRatio: 1,
     alignItems: "center",
     justifyContent: "center",
+
+    width: "45%",
+    backgroundColor: "rgba(255,255,255,0.07)",
+    borderRadius: 12,
+    marginBottom: 20,
+    overflow: "hidden",
+
+    shadowColor: "#000",
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 4,
   },
 
   itemText: {
-    width: "40%",
+    position: "absolute",
+    bottom: 10,
+    width: "100%",
     textAlign: "center",
-    fontSize: 30,
+    color: "white",
+    fontSize: 18,
+    paddingHorizontal: 5,
+  },
+
+  Text: {
+    width: "100%",
+    textAlign: "center",
+    fontSize: rs(25),
+    color: "#FFFFFF",
+    fontFamily: "Triforce",
+    textShadowColor: "rgba(0,0,0,0.4)",
+    textShadowOffset: { width: 2, height: 2 },
+    textShadowRadius: 4,
+    letterSpacing: 2,
+  },
+
+  TextTitre: {
+    width: "100%",
+    textAlign: "center",
+    fontSize: rs(50),
+    color: "#FFFFFF",
+    fontFamily: "Triforce",
+    marginBottom: rs(10),
+  },
+
+  Overlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  overlay: {
+    position: "absolute",
+    bottom: 0,
+    width: "100%",
+    height: "50%",
   },
 });
