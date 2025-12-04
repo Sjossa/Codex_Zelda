@@ -1,11 +1,10 @@
 import { LinearGradient } from "expo-linear-gradient";
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Dimensions,
   FlatList,
-  Linking,
   Pressable,
   StyleSheet,
   Text,
@@ -33,6 +32,7 @@ export default function ExampleScroll({
     : params.type;
 
   const value = typeParam ?? valueFromParams;
+  const router = useRouter();
 
   const [page, setPage] = useState<number>(1);
   const [posts, setPosts] = useState<any[]>([]);
@@ -52,10 +52,11 @@ export default function ExampleScroll({
     if (!value || !isValidRoute(value) || !hasMore) return;
 
     const loadPosts = async () => {
+      console.groupCollapsed(`Loading page ${page} for ${value}`);
       setLoading(true);
       try {
         const res = await fetch(
-          `${buildApiUrl(value as UrlType)}?limit=5&page=${page}`
+          `${buildApiUrl(value as UrlType)}?limit=6&page=${page}`
         );
         const json = await res.json();
         const newItems = json?.data ?? [];
@@ -85,13 +86,20 @@ export default function ExampleScroll({
   }
 
   const loadMore = () => {
-    if (!loading && hasMore) setPage((p) => p + 1);
+    if (!loading && hasMore) {
+      console.log(page);
+      setPage((p) => p + 1);
+    }
   };
 
   const renderItem = ({ item }: { item: any }) => (
     <Pressable
       style={styles.itemBox}
-      onPress={() => Linking.openURL(item.href)}
+      onPress={() =>
+        router.push(
+          `/wiki_bis?type=${value}&name=${encodeURIComponent(item.name)}`
+        )
+      }
     >
       <Svg width="100%" height="100%" viewBox="0 0 60 60">
         <ClipPath id={`clip-${item.id}`}>
