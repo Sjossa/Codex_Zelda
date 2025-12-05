@@ -56,7 +56,7 @@ export default function Home() {
   return (
     <ScreenBackground>
       <Pressable style={styles.topArea}>
-        <Text style={styles.TextTitre}>Projet zelda</Text>
+        <Text style={styles.TextTitre}>Codex Zelda</Text>
 
         <Svg width="100%" height="100%" viewBox="0 0 100 100">
           <ClipPath id="clip">
@@ -138,7 +138,7 @@ const styles = StyleSheet.create({
     height: width * 0.9,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: -50 * scale,
+    marginBottom: 10 * scale,
   },
 
   itemsContainer: {
@@ -196,7 +196,8 @@ const styles = StyleSheet.create({
     fontSize: rs(50),
     color: "#FFFFFF",
     fontFamily: "Triforce",
-    marginBottom: rs(10),
+    // marginBottom: rs(35),
+    marginTop: rs(150),
   },
 
   Overlay: {

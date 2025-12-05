@@ -7,8 +7,6 @@ import {
   View,
 } from "react-native";
 
-import { SafeAreaView } from "react-native-safe-area-context";
-
 interface CharactereProps {
   posts: any[];
 }
@@ -45,17 +43,21 @@ export function Charactere({ posts }: CharactereProps) {
     },
     nameOverlay: {
       position: "absolute",
-      bottom: 40,
+      bottom: 0,
       left: 40,
       right: 40,
       textAlign: "center",
       color: "#FFFFFF",
       fontFamily: "Triforce",
-      fontWeight: "400",
-      fontSize: rs(22),
-      textShadowOffset: { width: 1, height: 1 },
-      textShadowRadius: 3,
+      fontSize: rs(30),
+      backgroundColor: "rgba(0, 0, 0, 0.5)",
+
+      // Halo bleu Sheikah
+      textShadowColor: "rgba(0, 170, 255, 0.7)",
+      textShadowRadius: 12,
+      textShadowOffset: { width: 0, height: 0 },
     },
+
     base: {
       flexDirection: "column",
       paddingVertical: rs(5),
@@ -87,7 +89,7 @@ export function Charactere({ posts }: CharactereProps) {
             source={
               item.image
                 ? { uri: item.image }
-                : require("../../assets/images/default.webp")
+                : require("../../assets/images/link2.png")
             }
             resizeMode="contain"
             style={styles.image}
@@ -97,7 +99,7 @@ export function Charactere({ posts }: CharactereProps) {
         <View style={styles.base}>
           <View>
             <Text style={styles.infoText}>
-              Gender: {item.gender || "Sans nom"}
+              Gender: {item.gender || "inconue"}
             </Text>
             <Text style={styles.infoText}>Race: {item.race || "Sans nom"}</Text>
           </View>
@@ -124,14 +126,12 @@ export function Charactere({ posts }: CharactereProps) {
   );
 
   return (
-    <SafeAreaView style={{}}>
-      <FlatList
-        data={posts}
-        renderItem={renderItem}
-        keyExtractor={(_, index) => index.toString()}
-        contentContainerStyle={styles.listContent}
-        style={{ flex: 1 }}
-      />
-    </SafeAreaView>
+    <FlatList
+      data={posts}
+      renderItem={renderItem}
+      keyExtractor={(_, index) => index.toString()}
+      contentContainerStyle={styles.listContent}
+      style={{ flex: 1 }}
+    />
   );
 }

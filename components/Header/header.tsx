@@ -11,11 +11,7 @@ export default function Header() {
 
   return (
     <View style={[styles.Header, { paddingTop: insets.top }]}>
-      <Button
-        color={"red"}
-        title="Menu"
-        onPress={() => navigation.openDrawer()}
-      />
+      <Button color={""} title="Menu" onPress={() => navigation.openDrawer()} />
     </View>
   );
 }

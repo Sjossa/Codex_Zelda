@@ -1,15 +1,26 @@
+// le fichier il est vraiment grand attends faut des commentaires pour que j'arrette de me perdre mdr
+// ducoup la c'est les import; nan je vais pas dire a quoi servent tout les import
 import { LinearGradient } from "expo-linear-gradient";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useState } from "react";
+import ScreenBackground from "../components/Background/Background";
+import {
+  buildApiUrl,
+  isValidRoute,
+  routeToApiEndpoints,
+} from "../types/freakyjorys.types";
+
 import {
   ActivityIndicator,
   Dimensions,
   FlatList,
+  Linking,
   Pressable,
   StyleSheet,
   Text,
 } from "react-native";
 
+import { Searchbar } from "react-native-paper";
 import {
   ClipPath,
   Polygon,
@@ -17,27 +28,34 @@ import {
   Svg,
   Image as SvgImage,
 } from "react-native-svg";
-import ScreenBackground from "../components/Background/Background";
-import { buildApiUrl, isValidRoute, UrlType } from "../types/freakyjorys.types";
 
+//taille de l'ecran
 const { width } = Dimensions.get("window");
 const scale = width / 390;
 
 export default function ExampleScroll({
   typeParam,
 }: { typeParam?: string } = {}) {
+  // données /:type dans l'url
   const params = useLocalSearchParams();
   const valueFromParams = Array.isArray(params.type)
     ? params.type[0]
     : params.type;
-
   const value = typeParam ?? valueFromParams;
-  const router = useRouter();
 
+  // oublié mais en gros
+  // ca c'est pour savoir a quel page de l'url on doit aller chercher les données
   const [page, setPage] = useState<number>(1);
+  // ca c'est les données fetched
   const [posts, setPosts] = useState<any[]>([]);
+  // ca c'est pour savoir quand fetch
   const [loading, setLoading] = useState(false);
+  // euh ... je crois que c'est au cas ou l'api ne renvoie plus de données car il n'y a plus rien a envoyer quand page=n
   const [hasMore, setHasMore] = useState(true);
+  // new; je saurais plus tard
+  const [searchQuery, setSearchQuery] = useState("");
+  // ...
+  const [shouldFetch, setShouldFetch] = useState(0);
 
   // Reset si catégorie change
   useEffect(() => {
@@ -47,34 +65,65 @@ export default function ExampleScroll({
     setHasMore(true);
   }, [value]);
 
-  // Chargement API
+  // Fonction pour fetch les données (pagination + recherche)
+  const loadPosts = async (pageToLoad: number = page) => {
+    if (!value || !isValidRoute(value)) return;
+    setLoading(true);
+
+    try {
+      const endpoints = routeToApiEndpoints[value];
+
+      const results = await Promise.all(
+        endpoints.map(async (endpoint) => {
+          const url = `${buildApiUrl(endpoint)}?limit=10&page=${pageToLoad}${
+            searchQuery ? `&name=${encodeURIComponent(searchQuery)}` : ""
+          }`;
+          const res = await fetch(url);
+          if (!res.ok) return { data: [] };
+          const json = await res.json();
+          return { data: json.data || [] };
+        })
+      );
+
+      const allItems = results.flatMap((r) => r.data || []);
+
+      // FIX: Ajoute aux posts existants au lieu d'écraser si page>1
+      if (pageToLoad === 1) setPosts(allItems);
+      else setPosts((prev) => [...prev, ...allItems]);
+
+      // euh ... je crois que c'est au cas ou l'api ne renvoie plus de données
+      setHasMore(allItems.length === 10);
+    } catch (err) {
+      console.error("❌ Erreur fetch:", err);
+      if (pageToLoad === 1) setPosts([]);
+      setHasMore(false);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Pagination
+  const loadMore = () => {
+    if (!loading && hasMore) setPage((p) => p + 1);
+  };
+
+  // Déclenche fetch quand page change
   useEffect(() => {
-    if (!value || !isValidRoute(value) || !hasMore) return;
+    loadPosts(page);
+  }, [page, value]);
 
-    const loadPosts = async () => {
-      console.groupCollapsed(`Loading page ${page} for ${value}`);
-      setLoading(true);
-      try {
-        const res = await fetch(
-          `${buildApiUrl(value as UrlType)}?limit=6&page=${page}`
-        );
-        const json = await res.json();
-        const newItems = json?.data ?? [];
+  // Recherche avec debounce
+  useEffect(() => {
+    if (!value || !isValidRoute(value)) return;
 
-        if (newItems.length === 0) {
-          setHasMore(false);
-        } else {
-          setPosts((prev) => [...prev, ...newItems]);
-        }
-      } catch (err) {
-        console.error("API error:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
+    const delayDebounce = setTimeout(() => {
+      setPage(1); // toujours repartir de la première page
+      setHasMore(true);
+      loadPosts(1);
+    }, 500);
 
-    loadPosts();
-  }, [page, value, loading, hasMore]);
+    return () => clearTimeout(delayDebounce);
+  }, [searchQuery, value]);
 
   // Validation de route
   if (!value || !isValidRoute(value)) {
@@ -85,13 +134,23 @@ export default function ExampleScroll({
     );
   }
 
-  const loadMore = () => {
-    if (!loading && hasMore) {
-      console.log(page);
-      setPage((p) => p + 1);
-    }
+  // Reset si catégorie change
+  useEffect(() => {
+    if (!value || !isValidRoute(value)) return;
+    console.log(`🔄 Changement de catégorie vers: ${value}`);
+    setPosts([]);
+    setPage(1);
+    setHasMore(true);
+    // Force le re-fetch en changeant ce flag
+    setShouldFetch((prev) => prev + 1);
+  }, [value]);
+
+  // Open link helper
+  const openLink = (url?: string) => {
+    if (url) Linking.openURL(url);
   };
 
+  // Render item
   const renderItem = ({ item }: { item: any }) => (
     <Pressable
       style={styles.itemBox}
@@ -116,24 +175,21 @@ export default function ExampleScroll({
           fill="none"
         />
 
-        {item.image && (
-          <SvgImage
-            href={item.image}
-            x="5"
-            y="5"
-            width="50"
-            height="50"
-            preserveAspectRatio="xMidYMid slice"
-            clipPath={`url(#clip-${item.id})`}
-          />
-        )}
+        <SvgImage
+          href={require("../assets/images/link2.png")}
+          x="5"
+          y="5"
+          width="50"
+          height="50"
+          preserveAspectRatio="xMidYMid slice"
+          clipPath={`url(#clip-${item.id})`}
+        />
       </Svg>
 
       <LinearGradient
         colors={["transparent", "rgba(0,0,0,0.8)"]}
         style={styles.overlay}
       />
-
       <Text style={styles.itemText}>{item.name}</Text>
     </Pressable>
   );
@@ -141,6 +197,16 @@ export default function ExampleScroll({
   return (
     <ScreenBackground>
       <Text style={styles.title}>{value.toUpperCase()}</Text>
+
+      <Searchbar
+        placeholder={`Recherchez un ${typeParam}`}
+        onChangeText={setSearchQuery} // déclenche le useEffect
+        value={searchQuery}
+        style={styles.searchbar}
+        inputStyle={{ color: "white" }}
+        placeholderTextColor="rgba(255,255,255,0.6)"
+        iconColor="white"
+      />
 
       <FlatList
         data={posts}
@@ -173,9 +239,8 @@ const styles = StyleSheet.create({
     color: "#3b59c6",
     textAlign: "center",
     fontFamily: "Triforce",
-    marginBottom: 20 * scale,
-    marginTop: -50,
-
+    marginBottom: 10 * scale,
+    marginTop: 10 * scale,
     textShadowColor: "rgba(0,0,0,0.4)",
     textShadowOffset: { width: 2, height: 2 },
     textShadowRadius: 4,
@@ -184,7 +249,7 @@ const styles = StyleSheet.create({
 
   searchbar: {
     marginHorizontal: 20,
-    marginBottom: 30,
+    marginBottom: 20,
     backgroundColor: "rgba(255,255,255,0.15)",
     borderRadius: 12,
   },
@@ -205,7 +270,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     overflow: "hidden",
-
     shadowColor: "#000",
     shadowOpacity: 0.15,
     shadowRadius: 6,
